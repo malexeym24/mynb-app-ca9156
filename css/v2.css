@@ -131,3 +131,11 @@
 /* earn: figures that tick must not jump sideways */
 .tn{font-variant-numeric:tabular-nums}
 .pill .tn{font-weight:600}
+
+/* phones: in Home Screen / full-screen mode the iPhone reports a 34px bottom inset. The tab bar and the main button
+   keep only what the home indicator needs, so they sit low instead of floating half a centimetre above the edge. */
+@media(max-width:519px){
+  .tabbar{bottom:max(10px,calc(env(safe-area-inset-bottom,0px) - 20px))}
+  .toast{bottom:calc(94px + max(10px,calc(env(safe-area-inset-bottom,0px) - 20px)))}
+  .cta{padding-bottom:max(20px,calc(env(safe-area-inset-bottom,0px) - 8px))}
+}

@@ -32,7 +32,7 @@
   Sh.send = function (p) {
     var q = p.s ? ' data-s="' + p.s + '"' : '', kind = p.s ? DB.ASSETS[p.s].kind : '';
     return '<h3>Send funds</h3>' +
-      '<button class="opt" data-act="go" data-to="send" data-mode="internal"' + q + '>' + ic('user') + '<span class="grow"><div class="t">To a My Neobank account</div><div class="s">instant and free, any currency</div></span>' + ic('chev', 'mut') + '</button>' +
+      '<button class="opt" data-act="go" data-to="send" data-mode="internal"' + q + '>' + ic('user') + '<span class="grow"><div class="t">To My Neobank account</div><div class="s">instant and free, any currency</div></span>' + ic('chev', 'mut') + '</button>' +
       (kind === 'crypto' || kind === 'stable' ? '' : '<button class="opt" data-act="go" data-to="send" data-mode="iban"' + q + '>' + ic('bank') + '<span class="grow"><div class="t">To IBAN</div><div class="s">to any bank account, SEPA or SWIFT</div></span>' + ic('chev', 'mut') + '</button>') +
       (kind === 'fiat' ? '' : '<button class="opt" data-act="go" data-to="send" data-mode="wallet"' + q + '>' + ic('wallet') + '<span class="grow"><div class="t">To external wallet</div><div class="s">to other crypto wallets</div></span>' + ic('chev', 'mut') + '</button>');
   };
