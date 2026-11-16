@@ -1,4 +1,4 @@
-/* My Neobank demo v2 - glass surfaces, five-tab bar, crypto tab, guide, help. Loaded after app.css. */
+/* My Neobank demo v2 and later - glass surfaces, five-tab bar, crypto tab, guide, help. Loaded after app.css. */
 
 /* numbers line up */
 .row .r,.kv,.hero .v,.amt input,.ccard .num,.vs .big{font-variant-numeric:tabular-nums}
@@ -127,3 +127,7 @@
 .fspill .i:last-child{width:13px;height:13px;opacity:.7}
 .stepn{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;flex:none;margin:0 7px;font-size:13px;font-weight:600;color:var(--acc);border:1.5px solid var(--line2);background:rgba(139,249,250,.07)}
 .i.inl{width:17px;height:17px;display:inline-block;vertical-align:-3px}
+
+/* earn: figures that tick must not jump sideways */
+.tn{font-variant-numeric:tabular-nums}
+.pill .tn{font-weight:600}

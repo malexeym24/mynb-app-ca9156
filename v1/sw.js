@@ -1,12 +1,5 @@
-/* Network first, cache as a fallback: the demo always shows the latest version and still opens offline. */
-var CACHE = 'mynb-demo-v1';
+/* This version has been replaced by the demo at the site root. Drop the old offline copy and step aside. */
 self.addEventListener('install', function () { self.skipWaiting(); });
-self.addEventListener('activate', function (e) { e.waitUntil(self.clients.claim()); });
-self.addEventListener('fetch', function (e) {
-  if (e.request.method !== 'GET') return;
-  e.respondWith(fetch(e.request).then(function (res) {
-    var copy = res.clone();
-    caches.open(CACHE).then(function (c) { c.put(e.request, copy); }).catch(function () {});
-    return res;
-  }).catch(function () { return caches.match(e.request, { ignoreSearch: true }); }));
+self.addEventListener('activate', function (e) {
+  e.waitUntil(Promise.all([caches.delete('mynb-demo-v1'), caches.delete('mynb-demo-v2')]).then(function () { return self.registration.unregister(); }));
 });

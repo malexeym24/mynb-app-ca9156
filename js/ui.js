@@ -24,6 +24,7 @@
     down: '<rect x="3" y="3" width="18" height="18" rx="4"/><path d="m15 9-6 6M14 15H9v-5"/>',
     swap: '<path d="M4 9a8 8 0 0 1 14-3l2 2M20 15a8 8 0 0 1-14 3l-2-2"/><path d="M20 4v4h-4M4 20v-4h4"/>',
     plus: '<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>',
+    grow: '<path d="m3 17 6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
     full: '<path d="M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4"/>',
     share: '<path d="M12 15V3M8 7l4-4 4 4"/><path d="M7 11H6a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/>',
     back: '<path d="m15 5-7 7 7 7"/>', chev: '<path d="m9 5 7 7-7 7"/>', check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>', x: '<path d="M6 6l12 12M18 6 6 18"/>',
@@ -92,7 +93,7 @@
   }
   function kv(k, v, cls) { return '<div class="kv"><span>' + k + '</span><span class="' + (cls || '') + '">' + v + '</span></div>'; }
   function sec(title, link, act, data, ik) { return '<div class="sec"><h2>' + esc(title) + (ik ? ' ' + info(ik) : '') + '</h2>' + (link ? '<button data-act="' + act + '"' + dataAttrs(data) + '>' + esc(link) + '</button>' : '') + '</div>'; }
-  var TXI = { swap: 'swap', topup: 'plus', card: 'card', cashback: 'pct', loan: 'shield', protect: 'shield', fee: 'clock', inherit: 'heirs', 'in': 'down', out: 'send' };
+  var TXI = { swap: 'swap', topup: 'plus', card: 'card', cashback: 'pct', loan: 'shield', protect: 'shield', earn: 'grow', reward: 'grow', fee: 'clock', inherit: 'heirs', 'in': 'down', out: 'send' };
   function txRow(t) {
     var peer = t.peer && DB.acc(t.peer), neutral = t.meta && t.meta.neutral, pos = t.amt > 0;
     return row({
@@ -135,8 +136,8 @@
 
   /* ---------- render ---------- */
   function strip(name) {
-    if (name === 'welcome' || name === 'create' || !DB.me()) return '<div class="strip"><b>DEMO</b> paper money · nothing here is real</div>';
-    return '<button class="strip" data-act="sheet" data-name="guide"><b>DEMO</b> paper money <i>Guide ›</i></button>';
+    if (name === 'welcome' || name === 'create' || !DB.me()) return '<div class="strip"><b>DEMO v3</b> paper money · nothing here is real</div>';
+    return '<button class="strip" data-act="sheet" data-name="guide"><b>DEMO v3</b> paper money <i>Guide ›</i></button>';
   }
   function tabbar(active) {
     var me = DB.me();

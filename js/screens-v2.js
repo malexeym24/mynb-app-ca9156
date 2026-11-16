@@ -1,9 +1,10 @@
-/* My Neobank demo v2 - new home, Crypto tab, card funding, demo guide and help. Loaded last: replaces v1 screens of the same name. */
+/* My Neobank demo v2 and later - new home, Crypto tab, card funding, demo guide and help. Loaded last: replaces v1 screens of the same name. */
 (function (G) {
   'use strict';
   var DB = G.DB, U = G.UI, S = G.S, Sc = G.Screens, Sh = G.Sheets, A = G.Actions;
   var e = U.esc, ic = U.icon;
-  function has(me, s) { return (me.bal[s] || 0) > 0 || (me.pledged[s] || 0) > 0; }
+  function has(me, s) { return (me.bal[s] || 0) > 0 || (me.pledged[s] || 0) > 0 || !!DB.earnFor(me.id, s); }
+  function inEarn(me, s) { var p = DB.earnFor(me.id, s); return p ? ' · ' + DB.short(p.amt) + ' in Earn' : ''; }
   function pct(x) { return (x >= 0 ? '+' : '') + DB.nf(x * 100, 1) + '%'; }
 
   /* ---------- help: short explainers behind every "?" ---------- */
@@ -12,19 +13,20 @@
     plans: ['Shield or Collar', ['Shield: you keep all of the upside and pay a protection fee.', 'Collar: no protection fee. In return, the gain above a ceiling price is not yours while the loan is open.', 'Both plans protect you in a crash in the same way.']],
     ltv: ['How much to borrow', ['This is the loan compared with the value of the XRP you pledge. Lower is safer and cheaper.', 'At 40% you borrow 40 dollars for every 100 dollars of XRP.']],
     level: ['Protection level', ['The XRP price below which the protection starts paying your loan down. It sits where the loan would reach 75% of the value of your XRP.', 'A typical crypto loan is liquidated around 80%: the coins are sold at the bottom. Here they stay yours.']],
+    earn: ['Earn', ['Put a balance you are not using to work and earn a yearly rate on it.', 'The rate is shown before you start. Rewards are counted every second and paid to your balance once a day.', 'No lock-in. Take the full amount back any time.']],
     inherit: ['Inheritance plan', ['Choose who receives what you hold with us, and in what shares. Change it any time.', 'Nothing passes while you are alive. After a death, the heirs present the death certificate and legal documents. We verify them and release the assets to the heirs’ own accounts.', 'No keys or seed phrases to hand over.']],
     convert: ['Hold or convert', ['When a customer pays in stablecoins you choose what happens: keep them as they are, or turn them into euro the moment they arrive.', 'Either way the payment passes compliance checks first and lands with a clean accounting trail.']],
     margin: ['Our margin', ['One published margin on every conversion: 0.50%.', 'The rate you see is the rate you get. No hidden spread.']],
     cardsrc: ['Where the card takes money from', ['Your card has no separate balance and never needs a top-up.', 'It pays straight from the balance you choose. If that balance runs short, the next one covers the purchase, converted at the published margin.', 'To have more to spend, add money to that balance.']],
     pledged: ['Pledged XRP', ['XRP you pledged for a Shield loan. It is held with a regulated custodian, separate from everything else, and comes back when the loan is repaid.']],
-    demo: ['About this demo', ['A clickable concept of the My Neobank app. All money is paper money and lives only in this browser.', 'Prices, rates and fees are illustrative. Open the Guide in the top strip to see what to try.']]
+    demo: ['About this demo', ['A clickable concept of the My Neobank app. All money is paper money and lives only in this browser.', 'Prices, rates and fees are illustrative. Open the Guide in the top strip to see what to try.', 'Demo version 3, November 2026.']]
   };
   Sh.info = function (p) {
     var it = INFO[p.k] || INFO.demo;
     return '<h3>' + e(it[0]) + '</h3><div class="card pad infotext">' + it[1].map(function (t) { return '<p>' + e(t) + '</p>'; }).join('') + '</div>';
   };
   Sh.help = function () {
-    var keys = DB.me().type === 'company' ? ['convert', 'margin', 'cardsrc', 'demo'] : ['shield', 'plans', 'level', 'inherit', 'cardsrc', 'margin', 'demo'];
+    var keys = DB.me().type === 'company' ? ['convert', 'margin', 'cardsrc', 'demo'] : ['shield', 'plans', 'level', 'earn', 'inherit', 'cardsrc', 'margin', 'demo'];
     return '<h3>How it works</h3>' + keys.map(function (k) { return '<button class="opt" data-act="sheet" data-name="info" data-k="' + k + '">' + ic('help', 'acc') + '<span class="grow"><div class="t">' + e(INFO[k][0]) + '</div></span>' + ic('chev', 'mut') + '</button>'; }).join('');
   };
 
@@ -89,7 +91,7 @@
   }
   function fiatRow(me, s) {
     var b = me.bal[s] || 0;
-    return U.row({ left: U.aico(s), t: e(DB.ASSETS[s].name), s: s + ' account', rt: DB.fmt(s, b), rs: s === 'EUR' ? '' : DB.fmt('EUR', DB.eur(s, b)), act: 'go', data: { to: 'asset', s: s } });
+    return U.row({ left: U.aico(s), t: e(DB.ASSETS[s].name), s: s + ' account' + inEarn(me, s), rt: DB.fmt(s, b), rs: s === 'EUR' ? '' : DB.fmt('EUR', DB.eur(s, b)), act: 'go', data: { to: 'asset', s: s } });
   }
   Sc.home = {
     tab: 'home',
@@ -102,7 +104,7 @@
       var open = DB.requestsOf(me.id).filter(function (q) { return q.status === 'open'; }).length;
       var people = DB.others(me.id);
       return header() +
-        '<div class="hero"><div class="l">Total balance</div><div class="v" data-count="' + t.total + '" data-pre="€">€' + DB.nf(t.total, 2) + '</div><div class="s">€' + DB.short(t.fiat) + ' cash • €' + DB.short(t.crypto) + ' crypto</div>' +
+        '<div class="hero"><div class="l">Total balance</div><div class="v" data-count="' + t.total + '" data-pre="€">€' + DB.nf(t.total, 2) + '</div><div class="s">€' + DB.short(t.fiat) + ' cash • €' + DB.short(t.crypto) + ' crypto' + (t.earn > 0 ? ' • €' + DB.short(t.earn) + ' in Earn' : '') + '</div>' +
         (loans.length ? '<button class="p" data-act="go" data-to="shield">' + ic('shield') + DB.fmt('XRP', me.pledged.XRP || 0) + ' pledged · loan ' + DB.fmt('USDC', debt) + '</button>' : '') + '</div>' +
         '<div class="acts"><button class="act" data-act="sheet" data-name="send">' + ic('send') + 'Send</button><button class="act" data-act="go" data-to="swap">' + ic('swap') + 'Swap</button><button class="act" data-act="go" data-to="add">' + ic('plus') + 'Add</button></div>' +
         (people.length ? '<div class="people">' + people.map(function (a) { return '<button class="person" data-act="go" data-to="send" data-mode="internal" data-to-acc="' + a.id + '">' + U.avatar(a, 'pp') + '<span class="ell">' + e(a.name) + '</span></button>'; }).join('') +
@@ -118,7 +120,7 @@
   function cryptoRow(me, s, dim) {
     var A0 = DB.ASSETS[s], b = me.bal[s] || 0, pl = me.pledged[s] || 0, ch = A0.kind === 'crypto' ? U.change(s) : 0;
     return '<button class="row' + (dim ? ' dim' : '') + '" data-act="go" data-to="asset" data-s="' + s + '">' + U.aico(s) +
-      '<span class="grow"><div class="t ell">' + e(A0.name) + '</div><div class="s ell">' + (A0.kind === 'crypto' ? '$' + DB.nf(DB.px(s), DB.px(s) >= 1000 ? 0 : 2) + ' <span class="' + (ch >= 0 ? 'ok' : 'bad') + '">' + pct(ch) + '</span>' : 'Stablecoin') + '</div></span>' +
+      '<span class="grow"><div class="t ell">' + e(A0.name) + '</div><div class="s ell">' + (A0.kind === 'crypto' ? '$' + DB.nf(DB.px(s), DB.px(s) >= 1000 ? 0 : 2) + ' <span class="' + (ch >= 0 ? 'ok' : 'bad') + '">' + pct(ch) + '</span>' : 'Stablecoin' + inEarn(me, s)) + '</div></span>' +
       (A0.kind === 'crypto' ? U.spark(s, 52, 26) : '') +
       '<span class="r"><div class="t">' + (dim ? 'Add' : DB.nf(b, 0, b >= 1000 ? 0 : A0.dec) + ' ' + s) + '</div><div class="s">' + (dim ? '' : (pl ? DB.short(pl) + ' pledged' : DB.fmt('EUR', DB.eur(s, b)))) + '</div></span></button>';
   }
@@ -144,14 +146,15 @@
   Sc.asset = {
     render: function (p) {
       var me = DB.me(), s = p.s, A0 = DB.ASSETS[s], b = me.bal[s] || 0, pl = me.pledged[s] || 0, cr = A0.kind === 'crypto';
-      var txs = DB.txsOf(me.id).filter(function (t) { return t.asset === s || (t.meta && t.meta.from === s); }).slice(0, 12);
+      var txs = DB.txsOf(me.id).filter(function (t) { return t.asset === s || (t.meta && t.meta.from === s); }).slice(0, 12), ep = DB.earnFor(me.id, s);
       var det = A0.kind === 'fiat'
         ? U.kv('Account holder', e(me.legal || me.name)) + U.kv('IBAN', '<button data-act="copy" data-text="' + e(me.iban) + '" class="acc">' + e(me.iban) + '</button>') + U.kv('Payments', s === 'EUR' ? 'SEPA Instant, SWIFT' : 'SWIFT')
         : U.kv('Network', s === 'XRP' ? 'XRP Ledger' : s === 'BTC' ? 'Bitcoin' : 'Ethereum') + U.kv('Your address', '<button data-act="copy" data-text="' + DB.address(me, s) + '" class="acc code">' + DB.address(me, s).slice(0, 14) + '… ' + '</button>');
       return U.top(A0.name) +
         '<div class="hero" style="padding-top:4px"><div style="display:grid;place-items:center;margin-bottom:12px">' + U.aico(s, 'lg') + '</div><div class="v">' + DB.fmt(s, b) + '</div>' +
         (s === 'EUR' ? '' : '<div class="s">' + DB.fmt('EUR', DB.eur(s, b)) + '</div>') +
-        (pl ? '<button class="p" data-act="go" data-to="shield">' + ic('shield') + DB.fmt(s, pl) + ' pledged for a Shield loan</button>' : '') + '</div>' +
+        (pl ? '<button class="p" data-act="go" data-to="shield">' + ic('shield') + DB.fmt(s, pl) + ' pledged for a Shield loan</button>' : '') +
+        (ep ? '<button class="p" data-act="go" data-to="earn">' + ic('grow') + DB.fmt(s, ep.amt) + ' in Earn · ' + DB.nf(ep.rate * 100, 1) + '% a year</button>' : '') + '</div>' +
         (cr ? '<div class="card pad" style="margin-bottom:14px"><div class="flex between"><span class="b">' + DB.fmtPx(s) + '</span><span class="pill ' + (U.change(s) >= 0 ? 'ok' : 'bad') + '">' + pct(U.change(s)) + '</span></div>' + U.spark(s, 320, 96, true) + '<div class="mut xs">Demo price history, not market data</div></div>' : '') +
         '<div class="acts"><button class="act" data-act="sheet" data-name="send" data-s="' + s + '">' + ic('send') + 'Send</button><button class="act" data-act="go" data-to="swap" data-from="' + s + '">' + ic('swap') + 'Swap</button><button class="act" data-act="go" data-to="add" data-s="' + s + '">' + ic(cr ? 'down' : 'plus') + (A0.kind === 'fiat' ? 'Add' : 'Receive') + '</button></div>' +
         (s === 'XRP' && me.type === 'person' ? '<button class="card pad glow flex" style="width:100%;margin-bottom:6px" data-act="go" data-to="shield">' + ic('shield', 'acc') + '<span class="grow"><div class="b">Borrow against your XRP</div><div class="mut sm">Shield loan · crash protection built in</div></span>' + ic('chev', 'mut') + '</button>' : '') +
@@ -215,6 +218,7 @@
       ['send', 'Send money' + (friend ? ' to ' + friend.name : ''), 'Instant and free between accounts', 'go', friend ? { to: 'send', mode: 'internal', 'to-acc': friend.id } : { to: 'send', mode: 'internal' }],
       ['swap', 'Swap currencies', 'Any currency into any other', 'go', { to: 'swap' }],
       ['card', 'Get a card and pay with it', 'Standard, Premium or Metal', 'tab', { to: 'cards' }],
+      ['earn', 'Put idle money to work', 'Earn a yearly rate on a balance', 'go', { to: 'earn' }],
       ['loan', 'Borrow against your XRP', 'Take a Shield loan', 'go', { to: 'shield' }],
       ['crash', 'Crash the market', 'Watch the protection pay your loan down', 'guideCrash', {}],
       ['heirs', 'Name your heirs', 'Set an inheritance plan', 'go', { to: 'inherit' }]

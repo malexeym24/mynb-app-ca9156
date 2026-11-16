@@ -1,4 +1,4 @@
-/* My Neobank demo - premium services for private clients: Shield loan and Inheritance plan. */
+/* My Neobank demo - premium services for private clients: Shield loan, Earn and Inheritance plan. */
 (function (G) {
   'use strict';
   var DB = G.DB, U = G.UI, S = G.S, Sc = G.Screens, Sh = G.Sheets, A = G.Actions;
@@ -14,10 +14,13 @@
     render: function () {
       var me = DB.me(), loans = DB.loansOf(me.id).filter(function (l) { return l.status === 'active'; }), plan = DB.plan(me.id);
       var debt = loans.reduce(function (s, l) { return s + l.principal; }, 0), named = DB.plansNaming(me.id);
-      return U.top('Premium', { noBack: true }) +
-        '<div class="lead">Wealth services for <em>private clients</em></div><p class="sub">Borrow without selling. Pass it on without losing it.</p>' +
+      var earn = DB.earnSum(me.id), best = Math.max.apply(null, Object.keys(DB.EARN.rates).map(function (k) { return DB.EARN.rates[k]; }));
+      return U.top('Wealth', { noBack: true }) +
+        '<div class="lead">Wealth services for <em>private clients</em></div><p class="sub">Borrow without selling. Earn while you hold. Pass it on without losing it.</p>' +
         '<button class="card pad glow" style="width:100%;display:block" data-act="go" data-to="shield"><div class="flex between">' + ic('shield', 'acc') + (loans.length ? '<span class="pill ok">' + ic('check') + 'Protected</span>' : '<span class="pill">New</span>') + '</div>' +
         '<div class="b mt" style="font-size:19px">Shield loan</div><div class="mut sm" style="margin-top:4px;line-height:1.45">' + (loans.length ? 'You owe ' + DB.fmt('USDC', debt) + ' against ' + DB.fmt('XRP', me.pledged.XRP || 0) + '.' : 'Borrow USDC against your XRP. Crash protection is built into every loan.') + '</div></button>' +
+        '<button class="card pad glow mt" style="width:100%;display:block" data-act="go" data-to="earn"><div class="flex between">' + ic('grow', 'acc') + (earn.n ? '<span class="pill ok">' + ic('check') + 'Earning</span>' : '<span class="pill">New</span>') + '</div>' +
+        '<div class="b mt" style="font-size:19px">Earn</div><div class="mut sm" style="margin-top:4px;line-height:1.45">' + (earn.n ? '€' + DB.short(earn.value) + ' at work, about €' + DB.short(earn.yearly) + ' a year.' : 'Put idle balances to work. Up to ' + pc(best, 0) + ' a year, take it back any time.') + '</div></button>' +
         '<button class="card pad glow mt" style="width:100%;display:block" data-act="go" data-to="inherit"><div class="flex between">' + ic('heirs', 'acc') + (plan && plan.status === 'active' ? '<span class="pill ok">' + ic('check') + 'Active</span>' : '<span class="pill">New</span>') + '</div>' +
         '<div class="b mt" style="font-size:19px">Inheritance plan</div><div class="mut sm" style="margin-top:4px;line-height:1.45">' + (plan && plan.status === 'active' ? plan.heirs.map(function (h) { return e(h.name) + ' ' + DB.nf(h.share, 0, 1) + '%'; }).join(' · ') : 'Name your heirs in one tap. A smart contract keeps the plan.') + '</div></button>' +
         (named.length ? U.sec('You are named as an heir') + '<div class="card">' + named.map(function (o) {
@@ -39,7 +42,7 @@
     return '<div class="card pad mt"><div class="flex between"><span class="b">Crash test</span><span class="pill' + (pct < 0 ? ' warn' : ' ok') + '" data-live="ct-p">XRP ' + pxs(P) + ' · ' + (pct > 0 ? '+' : '') + pct + '%</span></div>' +
       '<div class="mut xs" style="margin-top:4px">Drag to see what a crash or a rally does.</div><input type="range" name="sim" min="-85" max="150" step="5" value="' + pct + '">' +
       '<div class="vs" data-live="ct-vs">' + typ + '<div class="good"><div class="h">Shield loan</div>' + sh + '</div></div>' +
-      (applyBtn ? '<button class="btn sec2 s mt" style="width:100%" data-act="loanApply" data-live="ct-apply">Make it real: set XRP to ' + pxs(P) + '</button>' : '') + '</div>';
+      (applyBtn ? '<button class="btn demo s mt" style="width:100%" data-act="loanApply" data-live="ct-apply">' + ic('bolt') + 'Apply this price: XRP ' + pxs(P) + '</button>' : '') + '</div>';
   }
   var CHART = '<svg class="chart" viewBox="0 0 340 160"><defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8BF9FA" stop-opacity=".28"/><stop offset="1" stop-color="#8BF9FA" stop-opacity="0"/></linearGradient></defs>' +
     '<path d="M0 40C40 30 60 50 90 70S130 128 160 126 210 80 250 56 310 26 340 22V160H0Z" fill="url(#g1)"/>' +
@@ -58,12 +61,12 @@
   Sc.shield = {
     render: function () {
       var me = DB.me(), loans = DB.loansOf(me.id), has = (me.bal.XRP || 0) > 0;
-      return U.top('Shield loan') +
+      return U.top('Shield loan', { right: '<button class="rb" data-act="sheet" data-name="info" data-k="shield" aria-label="Help">' + ic('help') + '</button>' }) +
         (loans.length ? '<div class="card mb">' + loans.map(loanRow).join('') + '</div>' : '') +
         '<div class="lead">Borrow against your XRP. <em>Keep it in a crash.</em></div>' +
         '<p class="sub">Never sell. A sale usually means tax, so holders borrow instead. Every Shield loan is hedged, so a crash pays your loan down instead of selling your coins.</p>' +
         '<div class="card pad">' + CHART + '</div>' +
-        '<div class="vs mt"><div class="dead"><div class="h">Typical crypto loan</div>A fixed liquidation price. When the market touches it, even for a minute, your coins are sold at the bottom.</div>' +
+        '<div class="vs mt"><div class="dead"><div class="h">Typical loan</div>A fixed liquidation price. When the market touches it, even for a minute, your coins are sold at the bottom.</div>' +
         '<div class="good"><div class="h">Shield loan</div>The protection bought with the loan pays it down in a crash. You keep the coins and the long-term position.</div></div>' +
         U.sec('How it works') + '<div class="card steps">' +
         '<div class="step"><div><div class="t">Pledge</div><div class="s">You pledge XRP. It is held with a regulated custodian, segregated.</div></div></div>' +
@@ -89,14 +92,14 @@
       return U.top('New Shield loan') +
         '<div class="hero" style="padding:4px 0 0"><div class="l">You pledge</div><div class="v" style="font-size:34px" data-live="sn-q">' + DB.fmt('XRP', c.qty) + '</div><div class="s" data-live="sn-qv">worth ' + usd(q.coll) + ' · you have ' + DB.fmt('XRP', c.bal) + '</div></div>' +
         '<input type="range" name="qty" min="0" max="' + c.bal + '" step="' + Math.max(1, Math.pow(10, Math.max(0, Math.floor(Math.log10(Math.max(1, c.bal))) - 2))) + '" value="' + c.qty + '">' +
-        '<label class="lbl">How much to borrow against it</label>' + U.chips('ltv', [[25, '25% · safest'], [40, '40% · balanced'], [50, '50% · maximum']], c.ltv) +
-        '<label class="lbl">Plan</label>' +
+        '<label class="lbl">How much to borrow against it ' + U.info('ltv') + '</label>' + '<div class="seg">' + [[25, 'Safest'], [40, 'Balanced'], [50, 'Maximum']].map(function (o) { return '<button class="' + (c.ltv === o[0] ? 'on' : '') + '" data-act="set" data-k="ltv" data-v="' + o[0] + '"><b>' + o[0] + '%</b><span>' + o[1] + '</span></button>'; }).join('') + '</div>' +
+        '<label class="lbl">Plan ' + U.info('plans') + '</label>' +
         '<button class="opt" style="' + (c.plan === 'shield' ? 'border-color:var(--acc2)' : '') + '" data-act="set" data-k="plan" data-v="shield">' + ic('shield', c.plan === 'shield' ? 'acc' : '') + '<span class="grow"><div class="t">Shield · full upside</div><div class="s">You keep every dollar of the rally. Protection fee ' + pc(cfg.fee) + ' a year.</div></span>' + (c.plan === 'shield' ? ic('check', 'acc') : '') + '</button>' +
         '<button class="opt" style="' + (c.plan === 'collar' ? 'border-color:var(--acc2)' : '') + '" data-act="set" data-k="plan" data-v="collar">' + ic('sliders', c.plan === 'collar' ? 'acc' : '') + '<span class="grow"><div class="t">Collar · lower cost, with a ceiling</div><div class="s">No protection fee. In return your upside stops at +' + pc(cfg.cap, 0) + '.</div></span>' + (c.plan === 'collar' ? ic('check', 'acc') : '') + '</button>' +
-        '<label class="lbl">Term</label>' + U.chips('term', DB.SHIELD.terms.map(function (t) { return [t, t + ' months']; }), c.term) +
+        '<label class="lbl">Term</label>' + '<div class="seg">' + DB.SHIELD.terms.map(function (t) { return '<button class="' + (c.term === t ? 'on' : '') + '" data-act="set" data-k="term" data-v="' + t + '"><b>' + t + '</b><span>months</span></button>'; }).join('') + '</div>' +
         '<div class="card pad glow mt" data-live="sn-sum"><div class="mut sm">You receive</div><div style="font-size:32px;font-weight:700;margin:4px 0 8px">' + DB.fmt('USDC', q.principal) + '</div>' +
         U.kv('Interest', pc(q.rate) + ' a year') + U.kv('Protection', q.fee ? pc(q.fee) + ' a year' : 'Included · ceiling at ' + pxs(q.capPrice)) +
-        U.kv('Monthly cost', DB.fmt('USDC', q.monthly)) + U.kv('Loan repaid', 'in ' + c.term + ' months, or earlier') + U.kv('Protection starts below', pxs(q.strike) + ' per XRP') + '</div>' +
+        U.kv('Monthly cost', DB.fmt('USDC', q.monthly)) + U.kv('Loan repaid', 'in ' + c.term + ' months, or earlier') + U.kv('Protection level ' + U.info('level'), 'below ' + pxs(q.strike) + ' per XRP') + '</div>' +
         crashBox(L, f, false) +
         '<div class="note mt">One clear price, agreed upfront. Demo figures, illustrative only.</div>' +
         '<div class="cta"><button class="btn" data-act="shieldGo" data-live="sn-btn"' + (c.ok ? '' : ' disabled') + '>' + (c.ok ? 'Get ' + DB.fmt('USDC', q.principal) : 'Minimum loan ' + DB.fmt('USDC', DB.SHIELD.minLoan)) + '</button></div>';
@@ -119,12 +122,12 @@
           '<div style="margin-top:12px"><span class="pill ok">' + ic('check') + 'Protected</span> ' + (L.due ? '<span class="pill warn">Due</span> ' : '') + (L.typicalLiquidated ? '<span class="pill bad">A typical loan would be gone</span>' : '') + '</div></div>'
         : '<div class="hero" style="padding:6px 0 14px"><div class="l">Loan closed</div><div class="v">' + DB.fmt('XRP', L.returned || 0) + '</div><div class="s">returned to your account</div><div style="margin-top:12px"><span class="pill mut">Closed ' + DB.dateOnly(L.closed || DB.now()) + '</span></div></div>';
       var body = '<div class="card pad">' + (act ? '<div class="flex between"><span class="mut sm">Loan to value</span><span class="b">' + pc(ltv) + '</span></div><div class="gauge"><b class="' + (ltv > 0.745 ? 'hot' : '') + '" style="width:' + w + '%"></b><i style="left:' + (0.75 / 0.9 * 100) + '%"></i></div><div class="mut xs rt">protection level 75%</div>' : '') +
-        U.kv('Plan', L.plan === 'collar' ? 'Collar · ceiling at ' + pxs(L.capPrice) : 'Shield · full upside') + U.kv('Borrowed', DB.fmt('USDC', L.principal0)) +
+        U.kv('Plan ' + U.info('plans'), L.plan === 'collar' ? 'Collar · ceiling at ' + pxs(L.capPrice) : 'Shield · full upside') + U.kv('Borrowed', DB.fmt('USDC', L.principal0)) +
         U.kv('Protection paid for you', '<span class="' + (L.paidProtection ? 'ok' : '') + '">' + DB.fmt('USDC', L.paidProtection) + '</span>') +
-        U.kv('Interest and fees paid', DB.fmt('USDC', L.paidCost)) + U.kv('Rate', pc(L.rate) + ' + ' + pc(L.fee) + ' protection') +
-        (act ? U.kv('Monthly cost', DB.fmt('USDC', L.principal * (L.rate + L.fee) / 12)) + U.kv('Term', 'month ' + L.months + ' of ' + L.term) + U.kv('Protection starts below', pxs(L.strike) + ' · now ' + pxs(P)) : (L.giveUp ? U.kv('Kept by the ceiling', DB.fmt('XRP', L.giveUp)) : '')) + '</div>';
+        U.kv('Rate', pc(L.rate) + ' + ' + pc(L.fee) + ' protection') +
+        (act ? U.kv('Monthly cost', DB.fmt('USDC', L.principal * (L.rate + L.fee) / 12)) + U.kv('Term', L.term + ' months') + U.kv('Protection level ' + U.info('level'), pxs(L.strike) + ' · XRP now ' + pxs(P)) : (L.giveUp ? U.kv('Kept by the ceiling', DB.fmt('XRP', L.giveUp)) : '')) + '</div>';
       return U.top('Shield loan') + head +
-        (act ? '<div class="acts"><button class="act" data-act="sheet" data-name="repay" data-id="' + L.id + '">' + ic('check') + 'Repay</button>' + (L.due ? '<button class="act" data-act="loanExtend" data-id="' + L.id + '">' + ic('cal') + 'Extend</button>' : '<button class="act" data-act="demoMonth">' + ic('cal') + '+1 month</button>') + '</div>' : '') +
+        (act ? '<div class="acts"><button class="act" data-act="sheet" data-name="repay" data-id="' + L.id + '">' + ic('check') + 'Repay</button>' + (L.due ? '<button class="act" data-act="loanExtend" data-id="' + L.id + '">' + ic('cal') + 'Extend</button>' : '<button class="act" data-act="sheet" data-name="info" data-k="shield">' + ic('help') + 'How it works</button>') + '</div>' : '') +
         body + (act ? crashBox(L, f, true) : '') +
         U.sec('Timeline') + '<div class="card">' + L.log.map(function (x) { return U.row({ left: '<span class="ic">' + ic('clock') + '</span>', t: '<span style="white-space:normal;font-size:13.500px;line-height:1.4;display:block">' + e(x.text) + '</span>', s: e(DB.when(x.ts)) }); }).join('') + '</div>';
     }
@@ -151,6 +154,93 @@
     }, 'Confirm repayment');
   };
 
+  /* ---------- Earn ---------- */
+  function rateOf(s) { return DB.EARN.rates[s] || 0; }
+  function gain(x) { return '+' + DB.nf(x, x >= 1 ? 4 : 6); }
+  var ticker = null;
+  /* Keeps the "earned so far" figures moving while an Earn screen is open. */
+  function tick() {
+    if (ticker) return;
+    ticker = setInterval(function () {
+      var els = document.querySelectorAll('[data-earn]'), me = DB.me();
+      if (!els.length || !me) { clearInterval(ticker); ticker = null; return; }
+      Array.prototype.forEach.call(els, function (el) {
+        var id = el.getAttribute('data-earn'), p = id === 'all' ? null : DB.earnPos(id);
+        if (id === 'all') el.textContent = '+€' + gain(DB.earnSum(me.id).earned).slice(1);
+        else if (p) el.textContent = gain(p.paid + DB.earnAccrued(p));
+      });
+    }, 250);
+  }
+  function posRow(p) {
+    return U.row({ left: U.aico(p.asset), t: DB.fmt(p.asset, p.amt), s: pc(p.rate) + ' a year', rt: '<span class="ok tn" data-earn="' + p.id + '">' + gain(p.paid + DB.earnAccrued(p)) + '</span>', rs: p.asset + ' earned', act: 'sheet', data: { name: 'earnpos', id: p.id }, chev: 1 });
+  }
+  Sc.earn = {
+    after: tick,
+    render: function () {
+      var me = DB.me(), pos = DB.earnOf(me.id), sum = DB.earnSum(me.id);
+      var list = DB.ORDER.filter(function (s) { return rateOf(s) && (me.bal[s] || 0) > 0; });
+      var head = pos.length
+        ? '<div class="hero" style="padding:4px 0 14px"><div class="l">At work in Earn</div><div class="v" data-count="' + sum.value + '" data-pre="€">€' + DB.nf(sum.value, 2) + '</div><div class="s">about €' + DB.nf(sum.yearly, 0) + ' a year</div>' +
+          '<div style="margin-top:12px"><span class="pill ok">' + ic('grow') + '<span class="tn" data-earn="all">+€' + gain(sum.earned).slice(1) + '</span> earned so far</span></div></div>' +
+          '<div class="card">' + pos.map(posRow).join('') + '</div>' +
+          '<button class="btn demo mt" data-act="earnSkip">' + ic('bolt') + 'Skip 30 days</button>'
+        : '<div class="lead">Idle money, <em>working</em></div><p class="sub">Put the balances you are not using to work. One clear yearly rate, shown before you start.</p>' +
+          '<div class="card steps">' +
+          '<div class="step"><div><div class="t">Choose a balance</div><div class="s">Euro, dollars, stablecoins or crypto. Any amount.</div></div></div>' +
+          '<div class="step"><div><div class="t">Rewards every day</div><div class="s">Counted every second, paid to your balance once a day.</div></div></div>' +
+          '<div class="step"><div><div class="t">Take it back any time</div><div class="s">No lock-in. The full amount returns in one tap.</div></div></div></div>';
+      return U.top('Earn', { right: '<button class="rb" data-act="sheet" data-name="info" data-k="earn" aria-label="Help">' + ic('help') + '</button>' }) + head +
+        U.sec(pos.length ? 'Add a balance' : 'Choose a balance') + '<div class="card">' + (list.length ? list.map(function (s) {
+          return U.row({ left: U.aico(s), t: e(DB.ASSETS[s].name), s: 'You have ' + DB.fmt(s, me.bal[s]), rt: '<span class="acc">' + pc(rateOf(s)) + '</span>', rs: 'a year', act: 'go', data: { to: 'earnnew', s: s }, chev: 1 });
+        }).join('') : '<div class="empty">Add money first, then put it to work.</div>') + '</div>' +
+        '<div class="mut xs c mt">Demo rates, illustrative only.</div>';
+    }
+  };
+  A.earnSkip = function () {
+    var paid = DB.earnSkip(DB.me().id, 30); U.render();
+    U.toast(paid > 0 ? '30 days of rewards paid: +€' + DB.nf(paid, 2) : 'Nothing in Earn yet');
+  };
+  function earnCtx(p, f) {
+    var me = DB.me(), s = p.s, bal = me.bal[s] || 0, x = U.num(f.amt), rate = rateOf(s);
+    return { me: me, s: s, bal: bal, x: x, rate: rate, ok: rate > 0 && x > 0 && x <= bal + 1e-9, over: x > bal + 1e-9 };
+  }
+  Sc.earnnew = {
+    render: function (p, f) {
+      var c = earnCtx(p, f), s = c.s, yr = c.x * c.rate, have = DB.earnFor(c.me.id, s);
+      return U.top('Earn on ' + s) +
+        U.amount(f, '<span class="' + (c.over ? 'bad' : '') + '">' + (c.over ? 'Not enough · ' : '') + 'Available ' + DB.fmt(s, c.bal) + '</span>') +
+        '<div class="chips wrap" style="justify-content:center">' + [[0.25, 'A quarter'], [0.5, 'Half'], [1, 'All']].map(function (q) { return '<button class="chip" data-act="set" data-k="amt" data-v="' + DB.r(s, c.bal * q[0]) + '">' + q[1] + '</button>'; }).join('') + '</div>' +
+        '<div class="card pad glow mt" data-act="focusAmt" data-live="en-sum"><div class="mut sm">You earn' + (c.x > 0 ? ' about' : ' · type an amount above') + '</div><div style="font-size:30px;font-weight:700;margin:4px 0">' + DB.fmt(s, yr, { plus: yr > 0 }) + ' <span class="mut" style="font-size:15px;font-weight:400">a year</span></div>' +
+        U.kv('Rate ' + U.info('earn'), pc(c.rate) + ' a year') + U.kv('About a month', DB.fmt(s, yr / 12)) + U.kv('Rewards', 'Paid to your balance daily') + U.kv('Take it back', 'Any time, in full') + '</div>' +
+        (have ? '<div class="note mt">You already have ' + DB.fmt(s, have.amt) + ' in Earn. This adds to it.</div>' : '') +
+        '<div class="mut xs c mt">Demo rate, illustrative only.</div>' +
+        '<div class="cta"><button class="btn" data-act="earnGo" data-live="en-btn"' + (c.ok ? '' : ' disabled') + '>' + (c.x > 0 && !c.over ? 'Start earning on ' + DB.fmt(s, c.x) : 'Start earning') + '</button></div>';
+    }
+  };
+  A.earnGo = function () {
+    var c = earnCtx(U.cur().p, S.form); if (!c.ok) return;
+    U.faceId(function () {
+      var p = DB.earnStart(c.me.id, c.s, c.x);
+      U.done({ icon: 'grow', title: 'Your money is working', text: DB.fmt(c.s, c.x) + ' now earns ' + pc(c.rate) + ' a year.', lines: [['In Earn', DB.fmt(c.s, p.amt)], ['About a year', DB.fmt(c.s, p.amt * p.rate, { plus: true })], ['Take it back', 'Any time, in full']], label: 'Open Earn', to: 'earn', home: 'premium' });
+    }, 'Confirm Earn');
+  };
+  Sh.earnpos = function (p) {
+    var q = DB.earnPos(p.id); if (!q) return '<h3>Earn</h3><div class="empty">This balance is no longer in Earn.</div>';
+    var s = q.asset;
+    return '<h3>' + e(DB.ASSETS[s].name) + ' in Earn</h3><div class="card">' + U.kv('At work', DB.fmt(s, q.amt)) + U.kv('Rate', pc(q.rate) + ' a year') +
+      U.kv('Earned so far', '<span class="ok"><span class="tn" data-earn="' + q.id + '">' + gain(q.paid + DB.earnAccrued(q)) + '</span> ' + s + '</span>') +
+      U.kv('Already paid to your balance', DB.fmt(s, q.paid)) + U.kv('Since', DB.dateOnly(q.start)) + '</div>' +
+      '<button class="btn mt" data-act="go" data-to="earnnew" data-s="' + s + '">' + ic('plus') + 'Add more</button>' +
+      '<button class="btn sec2 mt" data-act="earnStop" data-id="' + q.id + '">Take it all back</button>' +
+      '<div class="note mt">The full amount returns to your ' + s + ' balance at once, with the rewards counted so far.</div>';
+  };
+  A.earnStop = function (d) {
+    U.faceId(function () {
+      var o = DB.earnStop(d.id); U.render();
+      U.toast(DB.fmt(o.asset, o.amt) + ' is back in your balance' + (o.paid > 0 ? '. Earned in total: ' + DB.fmt(o.asset, o.paid, { plus: true }) : ''));
+    }, 'Confirm');
+  };
+
   /* ---------- Inheritance ---------- */
   function estate(a) { var t = DB.totals(a); return Math.max(0, t.total + t.pledged - t.debt); }
   function sharesBar(heirs) { return '<div class="bar">' + heirs.map(function (h, i) { return '<span style="width:' + Math.max(0, +h.share || 0) + '%;background:' + COL[i % COL.length] + '"></span>'; }).join('') + '</div>'; }
@@ -160,7 +250,7 @@
     render: function () {
       var me = DB.me(), p = DB.plan(me.id);
       if (!p || p.status !== 'active') {
-        return U.top('Inheritance') + '<div class="lead">Your wealth reaches <em>your family</em></div>' +
+        return U.top('Inheritance', { right: '<button class="rb" data-act="sheet" data-name="info" data-k="inherit" aria-label="Help">' + ic('help') + '</button>' }) + '<div class="lead">Your wealth reaches <em>your family</em></div>' +
           '<p class="sub">Inheritance, built into the account. Crypto is easily lost on death: keys disappear, accounts freeze, families do not know what exists.</p>' +
           '<div class="card steps">' +
           '<div class="step"><div><div class="t">Set the plan</div><div class="s">Choose heirs and shares in the app, in one tap. Change it any time.</div></div></div>' +
@@ -176,12 +266,14 @@
           return '<div class="heir">' + heirAv(h, i) + '<span class="grow"><div class="t">' + e(h.name) + '</div><div class="mut sm">' + e(h.relation) + (h.accId ? ' · My Neobank account' : ' · will be invited') + '</div></span><span class="rt"><div class="b" style="color:' + COL[i % COL.length] + '">' + DB.nf(h.share, 0, 1) + '%</div><div class="mut sm">≈ €' + DB.short(est * h.share / 100) + '</div></span></div>';
         }).join('') + '</div>' +
         '<div class="card mt">' + U.kv('Recorded on-chain', '<button class="acc code" data-act="copy" data-text="' + p.hash + '">' + p.hash.slice(0, 10) + '…' + p.hash.slice(-6) + '</button>') + U.kv('Last change', DB.dateOnly(p.updated)) + U.kv('Heirs notified', p.notify ? 'Yes' : 'No, kept private') + (p.note ? U.kv('Your note', e(p.note)) : '') + '</div>' +
-        '<div class="acts mt"><button class="act" data-act="go" data-to="inheritedit">' + ic('sliders') + 'Change plan</button><button class="act" data-act="go" data-to="claim" data-owner="' + me.id + '">' + ic('bolt') + 'Demo a claim</button></div>' +
+        '<div class="acts mt"><button class="act" data-act="go" data-to="inheritedit">' + ic('sliders') + 'Change plan</button><button class="act demo" data-act="go" data-to="claim" data-owner="' + me.id + '">' + ic('bolt') + 'Demo a claim</button></div>' +
         U.sec('History') + '<div class="card">' + p.log.map(function (x) { return U.row({ left: '<span class="ic">' + ic('doc') + '</span>', t: '<span style="white-space:normal;font-size:13.500px;line-height:1.4;display:block">' + e(x.text) + '</span>', s: e(DB.when(x.ts)) }); }).join('') + '</div>' +
-        '<button class="btn danger mt2" data-act="planRemove">Remove the plan</button>';
+        '<div class="c mt2"><button class="mut sm" style="text-decoration:underline" data-act="planRemove">Remove the plan</button></div>';
     }
   };
-  A.planRemove = function () { DB.removePlan(DB.me().id); U.render(); U.toast('Plan removed'); };
+  A.planRemove = function () { U.sheet('planrm'); };
+  Sh.planrm = function () { return '<h3>Remove the plan?</h3><div class="mut c" style="margin:-6px 0 16px;line-height:1.5">Your heirs will no longer be recorded. You can set a new plan any time.</div><button class="btn danger" data-act="planRemoveGo">Remove the plan</button><button class="btn line mt" data-act="close">Keep it</button>'; };
+  A.planRemoveGo = function () { DB.removePlan(DB.me().id); S.sheet = null; U.render(); U.toast('Plan removed'); };
 
   function total(f) { return (f.heirs || []).reduce(function (s, h) { return s + (+h.share || 0); }, 0); }
   function split(f) { var n = f.heirs.length, each = Math.floor(1000 / n) / 10; f.heirs.forEach(function (h, i) { h.share = i === n - 1 ? Math.round((100 - each * (n - 1)) * 10) / 10 : each; }); }

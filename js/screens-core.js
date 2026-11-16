@@ -15,7 +15,7 @@
           return '<button class="acct" data-act="login" data-id="' + a.id + '">' + U.avatar(a) + '<span class="grow"><div class="n">' + e(a.name) + '</div><div class="t">' + e(a.tag) + '</div></span><span class="v">€' + DB.short(DB.totals(a).total) + '</span></button>';
         }).join('') +
         '<button class="acct new" data-act="go" data-to="create">' + ic('plus') + 'Create a new account</button>' +
-        '<div class="foot">Concept demo · paper money only</div></div>';
+        '<div class="foot">Demo version 3 · paper money only</div></div>';
     }
   };
   A.login = function (d) {
@@ -114,6 +114,7 @@
       (m.checks ? U.kv('Compliance', '<span class="ok">KYC ✓ · AML ✓ · Travel rule ✓</span>') : '') +
       U.kv('Reference', t.id.toUpperCase()) + '</div>' +
       (m.loan ? '<button class="btn sec2 mt" data-act="go" data-to="loan" data-id="' + m.loan + '">Open the loan</button>' : '') +
+      (m.earn ? '<button class="btn sec2 mt" data-act="go" data-to="earn">Open Earn</button>' : '') +
       '';
   };
   Sc.notifications = {
@@ -134,6 +135,7 @@
     if (parts[0] === 'request' && DB.request(parts[1])) return U.go('request', { id: parts[1] });
     if (to === 'activity') return U.go('activity');
     if (to === 'inherit') return U.go('inherit');
+    if (to === 'earn') return U.go('earn');
     if (to === 'premium') return U.tab('premium');
     U.render();
   };
