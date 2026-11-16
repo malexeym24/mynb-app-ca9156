@@ -118,3 +118,12 @@
 .tick{width:26px;height:26px;border-radius:50%;border:1.5px solid #2c4344;display:grid;place-items:center;flex:none;color:transparent;margin:0 8px}
 .tick .i{width:14px;height:14px;stroke-width:3}
 .tick.on{background:var(--ok);border-color:var(--ok);color:#03191a}
+
+/* full screen: hint on the welcome screen (iPhone) and numbered steps */
+.fsw{display:flex;justify-content:center;margin-bottom:20px}
+.intro .fsw{animation:up .6s 1.15s both}
+.fspill{display:flex;align-items:center;gap:8px;padding:9px 12px 9px 14px;border-radius:999px;font-size:13px;font-weight:500;color:var(--acc);background:rgba(139,249,250,.07);border:1px solid var(--line2)}
+.fspill .i{width:15px;height:15px}
+.fspill .i:last-child{width:13px;height:13px;opacity:.7}
+.stepn{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;flex:none;margin:0 7px;font-size:13px;font-weight:600;color:var(--acc);border:1.5px solid var(--line2);background:rgba(139,249,250,.07)}
+.i.inl{width:17px;height:17px;display:inline-block;vertical-align:-3px}

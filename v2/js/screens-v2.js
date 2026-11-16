@@ -28,6 +28,59 @@
     return '<h3>How it works</h3>' + keys.map(function (k) { return '<button class="opt" data-act="sheet" data-name="info" data-k="' + k + '">' + ic('help', 'acc') + '<span class="grow"><div class="t">' + e(INFO[k][0]) + '</div></span>' + ic('chev', 'mut') + '</button>'; }).join('');
   };
 
+  /* ---------- full screen on phones ----------
+     Android and desktop: the browser's Fullscreen API hides the bars (on a phone, after the first tap).
+     iPhone: Safari gives a page no such switch, the way there is the Home Screen icon, so we show how. */
+  var FS = G.FS = (function () {
+    var d = document, el = d.documentElement, nav = navigator;
+    function mm(q) { return !!(G.matchMedia && G.matchMedia(q).matches); }
+    function get() { try { return localStorage.getItem('mynb_fs'); } catch (x) { return null; } }
+    function set(v) { try { localStorage.setItem('mynb_fs', v); } catch (x) { /* private mode */ } }
+    var ios = /iPad|iPhone|iPod/.test(nav.userAgent) || (nav.platform === 'MacIntel' && nav.maxTouchPoints > 1 && /Macintosh/.test(nav.userAgent));
+    var req = el.requestFullscreen || el.webkitRequestFullscreen, exit = d.exitFullscreen || d.webkitExitFullscreen;
+    var api = {
+      ios: ios, touch: mm('(pointer: coarse)'), install: null,
+      installed: function () { return nav.standalone === true || mm('(display-mode: standalone)') || mm('(display-mode: fullscreen)'); },
+      on: function () { return !!(d.fullscreenElement || d.webkitFullscreenElement); },
+      can: function () { return !!req && !api.ios; },
+      enter: function () { try { var p = req.call(el, { navigationUI: 'hide' }); if (p && p.catch) p.catch(function () { /* refused */ }); } catch (x) { /* refused */ } },
+      leave: function () { try { var p = exit.call(d); if (p && p.catch) p.catch(function () { /* ignore */ }); } catch (x) { /* ignore */ } },
+      off: function () { return get() === 'off'; }, setOff: function (v) { set(v ? 'off' : 'on'); },
+      offer: function () { return !api.installed() && (api.ios || api.can()); }
+    };
+    if (api.can() && api.touch && !api.installed()) {
+      var first = function () { d.removeEventListener('click', first, true); if (!api.off() && !api.on()) api.enter(); };
+      d.addEventListener('click', first, true);
+    }
+    G.addEventListener('beforeinstallprompt', function (ev) { api.install = ev; });
+    G.addEventListener('appinstalled', function () { api.install = null; });
+    return api;
+  })();
+  function step(n, t, s) { return '<div class="row"><span class="stepn">' + n + '</span><span class="grow"><div class="t">' + t + '</div><div class="s">' + s + '</div></span></div>'; }
+  Sh.fs = function () {
+    if (FS.ios) return '<h3>Open full screen</h3><div class="mut sm c" style="margin:-8px 0 14px">On iPhone the demo runs without browser bars from a Home Screen icon.</div>' +
+      '<div class="card">' + step(1, 'Open this page in Safari', 'Opened from a messenger? Choose Open in Safari first') +
+      step(2, 'Tap Share ' + ic('share', 'acc inl'), 'The square with an arrow. On newer iPhones it is behind the ··· button') +
+      step(3, 'Choose Add to Home Screen', 'Then open My Neobank from the new icon') + '</div>' +
+      '<div class="note mt">Balances in the icon may start fresh: it keeps its own demo data.</div>';
+    var on = FS.on();
+    return '<h3>Full screen</h3><div class="mut sm c" style="margin:-8px 0 14px">' + (FS.touch ? 'On a phone the demo goes full screen after your first tap.' : 'Hide the browser around the demo, handy when you present it.') + '</div>' +
+      '<button class="btn mb" data-act="fsToggle">' + ic('full') + (on ? 'Leave full screen' : 'Go full screen') + '</button>' +
+      (FS.install ? '<button class="btn sec2 mb" data-act="fsInstall">' + ic('plus') + 'Install as an app</button>' : '') +
+      '<div class="note">' + (FS.touch ? 'Installed as an app, or added to the Home screen from the browser menu, it always opens without browser bars.' : 'Press Esc to leave full screen.') + '</div>';
+  };
+  A.fsToggle = function () {
+    var on = FS.on(); FS.setOff(on); if (on) FS.leave(); else FS.enter();
+    S.sheet = null; U.render(); U.toast(on ? 'Full screen off' : 'Full screen on');
+  };
+  A.fsInstall = function () { var ev = FS.install; if (!ev) return; FS.install = null; S.sheet = null; U.render(); try { ev.prompt(); } catch (x) { /* already used */ } };
+  function fsRow() { return FS.offer() ? U.row({ left: '<span class="ic sq">' + ic('full') + '</span>', t: 'Full screen', s: FS.ios ? 'Add the demo to your Home Screen' : 'Hide the browser bars', act: 'sheet', data: { name: 'fs' }, chev: 1 }) : ''; }
+  var welcome0 = Sc.welcome.render;
+  Sc.welcome.render = function (p, f) {
+    var h = welcome0.call(this, p, f);
+    return FS.ios && !FS.installed() ? h.replace('<div class="who">', '<div class="fsw"><button class="fspill" data-act="sheet" data-name="fs">' + ic('full') + 'Open full screen' + ic('chev') + '</button></div><div class="who">') : h;
+  };
+
   /* ---------- home ---------- */
   function header() {
     var me = DB.me(), n = DB.unread(me.id);
@@ -178,6 +231,7 @@
       (market ? '<div class="sec"><h2>Move the XRP price</h2></div><div class="card pad"><div class="flex between"><span class="mut sm">Demo market, now ' + DB.fmtPx('XRP') + '</span><span class="pill ' + (P < base ? 'bad' : 'ok') + '">' + (P >= base ? '+' : '') + DB.nf((P / base - 1) * 100, 0) + '% vs start</span></div>' +
         '<div class="chips wrap">' + [['1.4', 'Dip −30%'], ['1', 'Crash −50%'], ['0.6', 'Crash −70%'], ['4', 'Rally +100%'], ['2', 'Back to $2.00']].map(function (c) { return '<button class="chip" data-act="demoPx" data-v="' + c[0] + '">' + c[1] + '</button>'; }).join('') + '</div></div>' : '') +
       '<div class="sec"><h2>Menu layout</h2></div><div class="seg two"><button class="' + (DB.layout() === 'A' ? 'on' : '') + '" data-act="layoutSet" data-v="A"><b>5 tabs</b><span>separate Crypto tab</span></button><button class="' + (DB.layout() === 'B' ? 'on' : '') + '" data-act="layoutSet" data-v="B"><b>4 tabs</b><span>everything on Home</span></button></div>' +
+      (FS.offer() ? '<button class="opt mt" data-act="sheet" data-name="fs">' + ic('full', 'acc') + '<span class="grow"><div class="t">Full screen</div><div class="s">' + (FS.ios ? 'Add the demo to your Home Screen' : 'Hide the browser bars') + '</div></span>' + ic('chev', 'mut') + '</button>' : '') +
       '<div class="acts mt"><button class="act" data-act="sheet" data-name="switch">' + ic('users') + 'Switch account</button><button class="act" data-act="demoReset">' + ic('refresh') + 'Start over</button></div>';
   };
   A.layoutSet = function (d) { DB.setLayout(d.v); S.sheet = null; U.tab('home'); U.toast(d.v === 'B' ? 'Menu: 4 tabs, crypto on Home' : 'Menu: 5 tabs with Crypto'); };
@@ -198,7 +252,7 @@
         '<div class="card mt">' + U.kv('Total balance', '€' + DB.nf(t.total, 2)) + U.kv('IBAN', '<button class="acc" data-act="copy" data-text="' + e(me.iban) + '">' + e(me.iban) + '</button>') + U.kv('Member since', DB.dateOnly(me.created)) + '</div>' +
         '<div class="card mt">' +
         U.row({ left: '<span class="ic sq">' + ic('help') + '</span>', t: 'How it works', s: 'Short answers to the main questions', act: 'sheet', data: { name: 'help' }, chev: 1 }) +
-        U.row({ left: '<span class="ic sq">' + ic('map') + '</span>', t: 'Demo guide', s: 'What to try, and the demo market', act: 'sheet', data: { name: 'guide' }, chev: 1 }) +
+        U.row({ left: '<span class="ic sq">' + ic('map') + '</span>', t: 'Demo guide', s: 'What to try, and the demo market', act: 'sheet', data: { name: 'guide' }, chev: 1 }) + fsRow() +
         U.row({ left: '<span class="ic sq">' + ic('out') + '</span>', t: 'Sign out', act: 'logout', chev: 1 }) + '</div>';
     }
   };

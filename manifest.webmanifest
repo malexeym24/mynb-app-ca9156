@@ -1,0 +1,15 @@
+{
+  "name": "My Neobank Demo",
+  "short_name": "My Neobank",
+  "description": "Clickable concept demo. Paper money only.",
+  "start_url": "./v2/index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#010A0A",
+  "theme_color": "#010A0A",
+  "icons": [
+    { "src": "v2/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "v2/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
