@@ -1,0 +1,120 @@
+/* My Neobank demo v2 - glass surfaces, five-tab bar, crypto tab, guide, help. Loaded after app.css. */
+
+/* numbers line up */
+.row .r,.kv,.hero .v,.amt input,.ccard .num,.vs .big{font-variant-numeric:tabular-nums}
+.hero{padding:32px 0 26px}
+.hero .v{font-weight:800;letter-spacing:-.02em}
+
+/* soft light behind the glass */
+.orbs{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.orbs i{position:absolute;width:340px;height:340px;border-radius:50%;filter:blur(72px);opacity:.26}
+.orbs i:first-child{background:#1f8b8e;left:-150px;top:36%;animation:orb1 19s ease-in-out infinite alternate}
+.orbs i:last-child{background:#266798;right:-170px;top:66%;animation:orb2 23s ease-in-out infinite alternate}
+@keyframes orb1{to{transform:translate(80px,-70px)}}
+@keyframes orb2{to{transform:translate(-70px,-90px)}}
+.strip,.sbar{z-index:3}
+
+/* glass */
+.act,.chip,.rb,.opt,.btn.sec2,.acct,.seg button{
+  background:linear-gradient(180deg,rgba(255,255,255,.085),rgba(255,255,255,.03));
+  border:1px solid rgba(255,255,255,.1);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.1);
+  -webkit-backdrop-filter:blur(16px) saturate(140%);backdrop-filter:blur(16px) saturate(140%)}
+.card{background:linear-gradient(180deg,rgba(22,34,34,.74),rgba(12,21,21,.7));box-shadow:inset 0 1px 0 rgba(255,255,255,.05);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.card.glow{background:linear-gradient(160deg,rgba(24,52,53,.8),rgba(12,22,22,.72))}
+.chip.on,.seg button.on{background:linear-gradient(180deg,rgba(139,249,250,.2),rgba(139,249,250,.08));border-color:var(--acc2)}
+.rb.ghost{background:none;border-color:transparent;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+.sheet{background:rgba(8,18,18,.92);-webkit-backdrop-filter:blur(26px);backdrop-filter:blur(26px);position:relative}
+.sx{position:absolute;right:12px;top:12px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.06);color:var(--mut);z-index:2}
+.sx .i{width:16px;height:16px}
+
+/* tab bar: more transparent, five places */
+.tabbar{background:rgba(10,20,20,.56);border-color:rgba(255,255,255,.13);-webkit-backdrop-filter:blur(24px) saturate(150%);backdrop-filter:blur(24px) saturate(150%);box-shadow:0 12px 34px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.08)}
+.tabbar button{font-size:11px;transition:color .2s,background .2s}
+.tabbar.n5 button{font-size:10.5px}
+.tabbar button.on{background:rgba(139,249,250,.1);box-shadow:inset 0 0 0 1px rgba(139,249,250,.16)}
+.tabbar button.on .i{fill:rgba(139,249,250,.2)}
+.app.hastab::after{content:'';position:absolute;left:0;right:0;bottom:0;height:128px;background:linear-gradient(transparent,rgba(1,10,10,.94) 78%);pointer-events:none;z-index:2}
+
+/* status bar, only inside the desktop phone frame */
+.sbar{display:none}
+@media(min-width:520px){
+  .sbar{display:flex;justify-content:space-between;align-items:center;padding:14px 30px 0;font-size:14px;position:relative}
+  .sbar span{display:flex;gap:6px;align-items:center}
+}
+
+/* screen transitions */
+.in.fwd{animation:fromR .3s cubic-bezier(.2,.8,.2,1)}
+.in.back{animation:fromL .3s cubic-bezier(.2,.8,.2,1)}
+.in.fwd>*,.in.back>*{animation:none}
+@keyframes fromR{from{transform:translateX(28px);opacity:0}to{transform:none;opacity:1}}
+@keyframes fromL{from{transform:translateX(-28px);opacity:0}to{transform:none;opacity:1}}
+
+/* sticky action never hides content; screens without tabs end cleanly */
+.scroll.notab{padding-bottom:0}
+.scroll.notab>div{min-height:100%;display:flow-root;padding-bottom:28px}
+.cta{padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));margin-bottom:-28px}
+
+/* toast sits above the tab bar, away from the back button */
+.toast{top:auto;bottom:calc(108px + env(safe-area-inset-bottom,0px));animation:up .3s cubic-bezier(.2,.8,.2,1)}
+
+/* lists: solid hairlines, inset from the icon */
+.kv{border-bottom:1px solid var(--line)}
+.row{border-bottom:0;position:relative}
+.row::after{content:'';position:absolute;left:54px;right:0;bottom:0;height:1px;background:var(--line)}
+.row:last-child::after{display:none}
+.row .r{max-width:52%}
+.row.dim{opacity:.55}
+.pill .i{width:13px;height:13px}
+.btn[disabled]{opacity:1;background:rgba(255,255,255,.06);color:var(--mut2)}
+.sw2 span{box-shadow:inset 0 0 0 1px rgba(255,255,255,.28)}
+.vs .h{min-height:28px}
+.empty{padding:30px 12px}
+
+/* asset icons */
+.aico{border-color:rgba(255,255,255,.16)}
+.aico svg{width:60%;height:60%;display:block}
+.aico.lg{width:60px;height:60px;font-size:24px}
+.aico.fiat{background:#1c3335 !important;color:var(--acc);font-weight:500;box-shadow:inset 0 0 0 1.5px rgba(139,249,250,.42);border-color:transparent}
+.stack{display:flex;flex:none}
+.stack .aico{margin-left:-9px;border:2px solid #0f1a1a}
+.stack .aico:first-child{margin-left:0}
+.cryptolink{width:100%}
+
+/* quick people row */
+.people{display:flex;gap:4px;overflow-x:auto;margin:0 -16px 20px;padding:2px 12px;scrollbar-width:none}
+.people::-webkit-scrollbar{display:none}
+.person{flex:none;width:70px;display:flex;flex-direction:column;align-items:center;gap:7px;font-size:11.5px;color:#cfe0e0}
+.person .ell{max-width:66px;display:block}
+.av.pp{width:52px;height:52px;font-size:16px}
+.av.more{color:var(--acc);border:1.5px dashed var(--line2);background:rgba(139,249,250,.05)}
+
+/* sparklines */
+.spark{width:52px;height:26px;flex:none;margin:0 2px}
+.spark.big{width:100%;height:96px;margin:12px 0 6px;display:block}
+
+/* cards */
+.cardwrap{display:block;width:100%;margin-bottom:18px}
+.cardcap{display:flex;justify-content:space-between;align-items:center;padding:10px 6px 0;font-size:13px;color:#cfe0e0}
+.cardcap span{display:flex;align-items:center;gap:8px}
+.ccard::before{animation:shine 2.6s ease-out .4s 1 both}
+
+/* segmented choice */
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.seg.two{grid-template-columns:1fr 1fr}
+.seg button{border-radius:16px;padding:11px 6px;text-align:center}
+.seg button b{display:block;font-size:17px;font-weight:600}
+.seg button span{display:block;font-size:11.5px;color:var(--mut);margin-top:2px}
+.seg button.on b{color:var(--acc)}
+
+/* demo-only actions look different from product actions */
+.btn.demo{background:rgba(139,249,250,.06);color:var(--acc);border:1.5px dashed var(--line2);box-shadow:none}
+.act.demo{border:1.5px dashed var(--line2);background:rgba(139,249,250,.05);box-shadow:none}
+
+/* help */
+.ib{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;border:1px solid var(--line2);color:var(--acc2);font-size:11px;font-weight:600;vertical-align:middle;margin-left:4px;background:rgba(139,249,250,.07);line-height:1}
+.infotext p{margin:0 0 11px;font-size:14.5px;line-height:1.55;color:#dfeaea}
+.infotext p:last-child{margin:0}
+.tick{width:26px;height:26px;border-radius:50%;border:1.5px solid #2c4344;display:grid;place-items:center;flex:none;color:transparent;margin:0 8px}
+.tick .i{width:14px;height:14px;stroke-width:3}
+.tick.on{background:var(--ok);border-color:var(--ok);color:#03191a}
